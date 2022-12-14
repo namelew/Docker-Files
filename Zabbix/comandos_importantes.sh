@@ -1,0 +1,1 @@
+zabbix_proxy -R config_cache_reload # força update de dados com o server

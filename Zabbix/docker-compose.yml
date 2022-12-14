@@ -1,0 +1,97 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=zabbix
+      - POSTGRES_PASSWORD=zabbix
+      - DB_DATABASE=zabbix
+      - POSTGRES_ROOT_PASSWORD=zabbix
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - zabbix-bridge
+  zabbix-server:
+    container_name: zabbix-server
+    image: zabbix/zabbix-server-pgsql:6.0-ubuntu-latest
+    ports:
+      - 10051:10051
+    networks:
+      - zabbix-bridge
+    volumes:
+      - zabbix-server:/usr/lib/zabbix
+      - zabbix-server-config:/etc/zabbix
+    environment:
+      - ZBX_HOSTNAME=Zabbix server
+      - DB_SERVER_HOST=postgres
+      - DB_SERVER_PORT=5432
+      - POSTGRES_USER=zabbix
+      - POSTGRES_PASSWORD=zabbix
+      - POSTGRES_DB=zabbix
+      - ZBX_DEBUGLEVEL=3
+    depends_on:
+      - postgres
+  zabbix-web:
+    container_name: zabbix-web
+    image: zabbix/zabbix-web-apache-pgsql:6.0-ubuntu-latest
+    ports:
+      - 8080:8080
+      - 443:8443
+    networks:
+      - zabbix-bridge
+    links:
+      - postgres
+    volumes:
+      - zabbix-web:/etc/ssl/apache2
+    environment:
+      - ZBX_SERVER_HOST=zabbix-server
+      - ZBX_SERVER_PORT=10051
+      - DB_SERVER_HOST=postgres
+      - POSTGRES_DB=zabbix
+      - POSTGRES_USER=zabbix
+      - POSTGRES_PASSWORD=zabbix
+      - PHP_TZ=America/Sao_Paulo
+    depends_on:
+      - postgres
+  zabbix-proxy-01:
+    container_name: zabbix-proxy-01
+    image: zabbix/zabbix-proxy-sqlite3:6.0-ubuntu-latest
+    networks:
+      - zabbix-bridge
+    volumes:
+      - zabbix-proxy-01:/var/lib/zabbix/
+    environment:
+      - ZBX_HOSTNAME=Zabbix-01
+      - ZBX_SERVER_HOST=zabbix-server
+      - ZBX_PROXYMODE=0
+      - ZBX_SERVER_PORT=10051
+      - ZBX_DEBUGLEVEL=3
+    depends_on:
+      - zabbix-server
+      - postgres
+  zabbix-agent01:
+    container_name: zabbix-agent01
+    image: zabbix/zabbix-agent:6.0-ubuntu-latest
+    networks:
+      - zabbix-bridge
+    environment:
+      - ZBX_HOSTNAME=agent01
+      - ZBX_SERVER_HOST=zabbix-proxy-01
+      - ZBX_SERVER_PORT=10051
+      - ZBX_METADATA=linux
+      - ZBX_ACTIVE_ALLOW=false
+      - ZBX_PASSIVE_ALLOW=true
+      - ZBX_DEBUGLEVEL=3
+    depends_on:
+      - zabbix-proxy-01
+networks:
+  zabbix-bridge:
+    driver: bridge
+volumes:
+  zabbix-server:
+  zabbix-server-config:
+  zabbix-web:
+  zabbix-proxy-01:
+  postgres:

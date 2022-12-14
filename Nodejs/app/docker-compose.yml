@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: xwiki
+      POSTGRES_PASSWORD: xwiki
+      DB_DATABASE: xwiki
+      POSTGRES_ROOT_PASSWORD: xwiki
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+    networks:
+      - wiki-bridge
+  xwiki:
+    image: xwiki:14.8.0-postgres-tomcat
+    container_name: xwiki
+    volumes:
+      - type: volume
+        source: web
+        target: /usr/local/xwiki
+    networks:
+      - wiki-bridge
+    ports:
+      - 8080:8080
+    environment:
+      XWIKI_VERSION: 14.4.8
+      DB_USER: xwiki
+      DB_PASSWORD: xwiki
+      DB_DATABASE: xwiki
+      DB_HOST: postgres
+    depends_on:
+      - postgres
+networks:
+  wiki-bridge:
+    driver: bridge
+volumes:
+  postgres:
+  xwiki:
