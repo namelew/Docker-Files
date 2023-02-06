@@ -4,7 +4,6 @@ services:
     image: nginx:1.23-alpine
     ports:
       - 8080:80
-      - 8081:8080
     volumes:
       - rproxy-sites:/usr/share/nginx
       - rproxy-config:/etc/nginx
@@ -13,8 +12,6 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
-    ports:
-      - 5432:5432
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -25,6 +22,19 @@ services:
       - db-data:/var/lib/postgresql/data
     networks:
       - web_teste
+  api:
+    container_name: commerce-api
+    image: commerce-teste-api:1
+    environment:
+      - DBUSER=postgres
+      - DBHOST=postgres
+      - DBPORT=5432
+      - DBPW=postgres
+      - DBNAME=commerce
+    networks:
+      - web_teste
+    depends_on:
+      - postgres
 networks:
   web_teste:
     driver: bridge

@@ -1,5 +1,10 @@
 FROM golang:1.19-bullseye
-#falta adicionar as envs aqui
+
+ENV DBUSER=postgres
+ENV DBHOST=localhost
+ENV DBPORT=5432
+ENV DBPW=postgres
+ENV DBNAME=commerce
 
 WORKDIR /app
 COPY . .
