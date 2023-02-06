@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  web-cache:
+    container_name: web-cache
+    image: varnish:7.2-alpine
+    volumes:
+      - varnish-config:/etc/varnish/
+    ports:
+      - 8080:80
+    environment:
+      - VARNISH_SIZE=2G
+    networks:
+      - varnish-net
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DB_DATABASE=commerce
+      - POSTGRES_ROOT_PASSWORD=postgres
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - varnish-net
+  api:
+    container_name: commerce-api
+    image: commerce-teste-api:1
+    environment:
+      - DBUSER=postgres
+      - DBHOST=postgres
+      - DBPORT=5432
+      - DBPW=postgres
+      - DBNAME=commerce
+    networks:
+      - varnish-net
+    depends_on:
+      - postgres
+networks:
+  varnish-net:
+    driver: bridge
+volumes:
+  varnish-config:
+  db-data:
