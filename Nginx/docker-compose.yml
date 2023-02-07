@@ -35,6 +35,13 @@ services:
       - web_teste
     depends_on:
       - postgres
+  fastcgi:
+    container_name: fastcgi-php
+    image: php:8.1.15-fpm-alpine3.17
+    networks:
+      - web_teste
+    depends_on:
+      - reverse-proxy
 networks:
   web_teste:
     driver: bridge
